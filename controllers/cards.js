@@ -7,8 +7,9 @@ const {
   defaultErrorMessage,
 } = require('../utils/constants');
 
-module.exports.createCard = (req, res) => {
+const createCard = (req, res) => {
   const { name, link } = req.body;
+  console.log(req.user._id);
 
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.status(201).send(card))
@@ -22,14 +23,14 @@ module.exports.createCard = (req, res) => {
     });
 };
 
-module.exports.getCards = (req, res) => {
+const getCards = (req, res) => {
   Card.find({})
     .then((cards) => res.status(200).send(cards))
     .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
 };
 
-module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.carsId)
+const deleteCard = (req, res) => {
+  Card.findByIdAndRemove(req.params.cardId)
     .orFail()
     .then((card) => res.status(200).send(card))
     .catch((error) => {
@@ -47,8 +48,8 @@ module.exports.deleteCard = (req, res) => {
     });
 };
 
-module.exports.likeCard = (req, res) => {
-  Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
+const likeCard = (req, res) => {
+  Card.findByIdAndUpdate(req.params.cardsId, { $addToSet: { likes: req.user._id } }, { new: true })
     .orFail()
     .then((card) => res.status(200).send(card))
     .catch((error) => {
@@ -66,8 +67,8 @@ module.exports.likeCard = (req, res) => {
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
-  Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
+const dislikeCard = (req, res) => {
+  Card.findByIdAndUpdate(req.params.cardsId, { $pull: { likes: req.user._id } }, { new: true })
     .orFail()
     .then((card) => res.status(200).send(card))
     .catch((error) => {
@@ -83,4 +84,12 @@ module.exports.dislikeCard = (req, res) => {
       }
       return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
     });
+};
+
+module.exports = {
+  createCard,
+  getCards,
+  deleteCard,
+  likeCard,
+  dislikeCard,
 };
