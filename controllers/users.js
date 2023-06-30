@@ -1,6 +1,5 @@
-const User = require('../models/user');
-
 const mongoose = require('mongoose');
+const User = require('../models/user');
 
 const {
   ERROR_CODE_INVALID_DATA,
@@ -44,7 +43,6 @@ module.exports.getUser = (req, res) => {
     })
     .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
 };
-
 
 module.exports.updateProfile = (req, res) => {
   const { name, about } = req.body;
