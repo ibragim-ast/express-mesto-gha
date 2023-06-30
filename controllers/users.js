@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const User = require('../models/user');
 
 const {
@@ -28,20 +27,18 @@ module.exports.getUsers = (req, res) => {
 };
 
 module.exports.getUser = (req, res) => {
-  const { userId } = req.params.userId;
-
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Передан некорректный id пользователя.' });
-  }
-
-  User.findById(userId)
-    .then((user) => {
-      if (!user) {
+  User.findById(req.params.userId)
+    .orFail()
+    .then((user) => res.send(user))
+    .catch((error) => {
+      if (error.name === 'DocumentNotFoundError') {
         return res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
       }
-      return res.send(user);
-    })
-    .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
+      if (error.name === 'CastError') {
+        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Передан некорректный id пользователя.' });
+      }
+      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+    });
 };
 
 module.exports.updateProfile = (req, res) => {
