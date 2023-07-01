@@ -12,7 +12,7 @@ const createCard = (req, res) => {
   console.log(req.user._id);
 
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.status(201).send(card))
+    .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'ValidationError') {
         return res.status(ERROR_CODE_INVALID_DATA).send({
@@ -32,7 +32,7 @@ const getCards = (req, res) => {
 const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail()
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
         return res.status(ERROR_CODE_NOT_FOUND).send({
@@ -52,7 +52,7 @@ const likeCard = (req, res) => {
   console.log(req.params);
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .orFail()
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
         return res.status(ERROR_CODE_NOT_FOUND).send({
@@ -71,7 +71,7 @@ const likeCard = (req, res) => {
 const dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .orFail()
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
         return res.status(ERROR_CODE_NOT_FOUND).send({
