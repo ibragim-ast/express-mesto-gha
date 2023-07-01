@@ -9,7 +9,6 @@ const {
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
-  console.log(req.user._id);
 
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.send(card))
@@ -49,7 +48,6 @@ const deleteCard = (req, res) => {
 };
 
 const likeCard = (req, res) => {
-  console.log(req.params);
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .orFail()
     .then((card) => res.send(card))
