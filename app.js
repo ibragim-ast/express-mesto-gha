@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
@@ -20,9 +21,16 @@ app.use((req, res, next) => {
   next();
 });
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Слишком много запросов с вашего IP, попробуйте позже',
+});
+
 const cardsRouter = require('./routes/cards');
 const usersRouter = require('./routes/users');
 
+app.use(limiter);
 app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
 app.use('/*', (req, res) => {
