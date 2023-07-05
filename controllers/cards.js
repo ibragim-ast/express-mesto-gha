@@ -24,7 +24,7 @@ const createCard = (req, res) => {
 
 const getCards = (req, res) => {
   Card.find({})
-    .then((cards) => res.status(200).send(cards))
+    .then((cards) => res.send(cards))
     .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
 };
 

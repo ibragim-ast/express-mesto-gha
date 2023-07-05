@@ -4,6 +4,11 @@ const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
+const {
+  login,
+  createUser,
+} = require('./controllers/users');
+
 const app = express();
 
 const { PORT = 3000 } = process.env;
@@ -38,6 +43,9 @@ app.use('/cards', cardsRouter);
 app.use('/*', (req, res) => {
   res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запись не найдена!' });
 });
+
+app.post('/signin', login);
+app.post('/signup', createUser);
 
 app.listen(PORT, () => {
   console.log('Сервер запущен');
