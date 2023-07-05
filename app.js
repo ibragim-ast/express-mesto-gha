@@ -38,14 +38,13 @@ const usersRouter = require('./routes/users');
 
 app.use(helmet());
 app.use(limiter);
+app.post('/signin', login);
+app.post('/signup', createUser);
 app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
 app.use('/*', (req, res) => {
   res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запись не найдена!' });
 });
-
-app.post('/signin', login);
-app.post('/signup', createUser);
 
 app.listen(PORT, () => {
   console.log('Сервер запущен');
