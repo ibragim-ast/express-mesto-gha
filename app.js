@@ -4,6 +4,8 @@ const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
+const auth = require('./middlewares/auth');
+
 const {
   login,
   createUser,
@@ -40,6 +42,7 @@ app.use(helmet());
 app.use(limiter);
 app.post('/signin', login);
 app.post('/signup', createUser);
+app.use(auth);
 app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
 app.use('/*', (req, res) => {

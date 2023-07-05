@@ -50,6 +50,24 @@ const login = (req, res) => {
     });
 };
 
+const getUserInfo = (req, res) => {
+  const userId = req.user._id;
+
+  User.findById(userId)
+    .then((user) => {
+      if (!user) {
+        return res
+          .status(ERROR_CODE_NOT_FOUND)
+          .send({ message: 'Пользователь не найден' });
+      }
+
+      res.send(user);
+    })
+    .catch(() => res
+      .status(ERROR_CODE_DEFAULT)
+      .send({ message: defaultErrorMessage }));
+};
+
 const getUsers = (req, res) => {
   User.find({})
     .then((users) => res.send(users))
@@ -114,4 +132,5 @@ module.exports = {
   updateProfile,
   updateAvatar,
   login,
+  getUserInfo,
 };
