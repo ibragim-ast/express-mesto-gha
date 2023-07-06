@@ -29,23 +29,30 @@ const getCards = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .orFail()
-    .then((card) => res.send(card))
+    .then((card) => {
+      if (card.owner.toString() !== req.user._id) {
+        return res.status(403).send({ message: 'У вас нет прав на удаление этой карточки' });
+      }
+
+      Card.findByIdAndRemove(req.params.cardId)
+        .then(() => {
+          res.send({ message: 'Карточка успешно удалена' });
+        })
+        .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
+    })
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({
-          message: 'Запрашиваемая карточка не найдена',
-        });
+        return res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запрашиваемая карточка не найдена' });
       }
       if (error.name === 'CastError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({
-          message: 'Некорректный формат id карточки.',
-        });
+        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Некорректный формат id карточки.' });
       }
       return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
     });
 };
+
 
 const likeCard = (req, res) => {
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })

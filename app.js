@@ -21,14 +21,6 @@ app.use(bodyParser.json());
 
 const { ERROR_CODE_NOT_FOUND } = require('./utils/constants');
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64998afeb03e1c77a35f40aa',
-  };
-
-  next();
-});
-
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
