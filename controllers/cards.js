@@ -1,5 +1,7 @@
 const Card = require('../models/card');
 
+const NotFoundError = require('../errors/notFoundError');
+
 const {
   ERROR_CODE_INVALID_DATA,
   ERROR_CODE_NOT_FOUND,
@@ -44,7 +46,7 @@ const deleteCard = (req, res) => {
     })
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запрашиваемая карточка не найдена' });
+        throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
       if (error.name === 'CastError') {
         return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Некорректный формат id карточки.' });
@@ -53,16 +55,13 @@ const deleteCard = (req, res) => {
     });
 };
 
-
 const likeCard = (req, res) => {
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .orFail()
     .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({
-          message: 'Запрашиваемая карточка не найдена',
-        });
+        throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
       if (error.name === 'CastError') {
         return res.status(ERROR_CODE_INVALID_DATA).send({
