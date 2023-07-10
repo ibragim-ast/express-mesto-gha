@@ -1,8 +1,7 @@
 const Card = require('../models/card');
 
 const ForbiddenError = require('../errors/ForbiddenError');
-// eslint-disable-next-line import/extensions
-const NotFoundError = require('../errors/NotFoundError.js');
+const NotFoundError = require('../errors/NotFoundError1');
 const BadRequestError = require('../errors/BadRequestError');
 
 module.exports.getCards = (req, res, next) => {
