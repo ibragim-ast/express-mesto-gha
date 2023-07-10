@@ -2,33 +2,23 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const NotFoundError = require('../errors/NotFoundError1');
+const NotFoundError = require('../errors/NotFoundError');
 const UnauthorizedError = require('../errors/UnauthorizedError');
 const ConflictingRequestError = require('../errors/ConflictingRequestError');
 const BadRequestError = require('../errors/BadRequestError');
 
 const findUser = (id, res, next) => {
   User.findById(id)
-    .orFail()
+    .orFail(new NotFoundError('Пользователь по указанному id не найден'))
     .then((user) => res.send(user))
-    .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        return next(new NotFoundError('Пользователь по указанному id не найден.'));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 const changeUserData = (id, newData, res, next) => {
   User.findByIdAndUpdate(id, newData, { new: true, runValidators: true })
-    .orFail()
+    .orFail(new NotFoundError('Пользователь по указанному id не найден'))
     .then((user) => res.send(user))
-    .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        return next(new NotFoundError('Пользователь по указанному id не найден.'));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 module.exports.getUsers = (req, res, next) => {
