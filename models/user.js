@@ -1,9 +1,8 @@
-/* eslint-disable func-names */
 const mongoose = require('mongoose');
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
-
-const AuthError = require('../errors/authError');
+const isEmail = require('validator/lib/isEmail');
+const { INVALID_AUTH_DATA_ERROR_MESSAGE, URL_REGEX } = require('../utils/constants');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -20,18 +19,17 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    validate: {
-      validator: (v) => validator.isURL(v, { require_protocol: true, require_valid_protocol: true, protocols: ['http', 'htpps'] }),
-      message: 'Некорректная ссылка',
-    },
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator: (url) => URL_REGEX.test(url),
+    },
   },
   email: {
     type: String,
     required: true,
     unique: true,
     validate: {
-      validator: (v) => validator.isEmail(v),
+      validator: (value) => isEmail(value),
       message: 'Некорректная электронная почта',
     },
   },
@@ -39,25 +37,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 8,
+    select: false,
   },
 }, { versionKey: false });
 
-const findUserByCredentials = function (email, password) {
-  return this.findOne({ email })
-    .then((user) => {
-      if (!user) {
-        throw new AuthError('Неправильные почта или пароль');
-      }
-      return bcrypt.compare(password, user.password)
-        .then((matched) => {
-          if (!matched) {
-            throw new AuthError('Неправильные почта или пароль');
-          }
-          return user;
-        });
-    });
+const checkData = (data) => {
+  if (!data) throw new UnauthorizedError(INVALID_AUTH_DATA_ERROR_MESSAGE);
 };
 
-userSchema.statics.findUserByCredentials = findUserByCredentials;
+userSchema.statics.findUserByCredentials = async function checkUserData(email, password) {
+  const user = await this.findOne({ email }).select('+password');
+  checkData(user);
+
+  const matched = await bcrypt.compare(password, user.password);
+  checkData(matched);
+
+  return user;
+};
 
 module.exports = mongoose.model('User', userSchema);
