@@ -15,7 +15,6 @@ const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
 const ConflictRequestError = require('../errors/ConflictingRequestError');
 const { NODE_ENV, JWT_SECRET } = require('../config');
-const { errors } = require('celebrate');
 
 const checkData = (data) => {
   if (!data) throw new NotFoundError(USER_NOT_FOUND_MESSAGE);
@@ -64,7 +63,7 @@ module.exports.createUser = async (req, res, next) => {
       about,
       avatar,
       email,
-      password
+      password,
     } = req.body;
     const hash = await bcrypt.hash(password, 10);
     let user = await User.create({
@@ -92,7 +91,7 @@ const handleUpdateUserError = (next, error, avatar) => {
   if (error instanceof ValidationError) {
     return next(new BadRequestError(
       !avatar
-        ? INCORRECT_ADD_USER_DATA_MESSAGE
+        ? INCORRECT_UPDATE_USER_DATA_MESSAGE
         : INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
     ));
   }
