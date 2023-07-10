@@ -11,9 +11,9 @@ const {
   NOT_UNIQUE_EMAIL_ERROR_MESSAGE,
   INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
 } = require('../utils/constants');
-const NotFoundError = require('../errors/notFoundError');
+const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
-const ConflictRequestError = require('../errors/conflictError');
+const ConflictRequestError = require('../errors/ConflictingRequestError');
 const { NODE_ENV, JWT_SECRET } = require('../config');
 const { errors } = require('celebrate');
 

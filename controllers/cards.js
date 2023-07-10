@@ -9,7 +9,7 @@ const {
   NO_RIGHT_TO_DELETE_ERROR_MESSAGE,
 } = require('../utils/constants');
 const BadRequestError = require('../errors/BadRequestError');
-const NotFoundError = require('../errors/notFoundError');
+const NotFoundError = require('../errors/NotFoundError');
 const ForbiddenError = require('../errors/ForbiddenError');
 
 const checkData = (data) => {
