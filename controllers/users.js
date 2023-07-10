@@ -1,145 +1,144 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Error: { ValidationError, CastError } } = require('mongoose');
 const User = require('../models/user');
 
-const NotFoundError = require('../errors/notFoundError');
-const RequestError = require('../errors/requestError');
-const ConflictError = require('../errors/conflictError');
-
 const {
-  ERROR_CODE_INVALID_DATA,
-  ERROR_CODE_DEFAULT,
-  defaultErrorMessage,
+  USER_NOT_FOUND_MESSAGE,
+  INCORRECT_USER_DATA_MESSAGE,
+  INCORRECT_UPDATE_USER_DATA_MESSAGE,
+  INCORRECT_ADD_USER_DATA_MESSAGE,
+  NOT_UNIQUE_EMAIL_ERROR_MESSAGE,
+  INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
 } = require('../utils/constants');
+const NotFoundError = require('../errors/notFoundError');
+const BadRequestError = require('../errors/BadRequestError');
+const ConflictRequestError = require('../errors/conflictError');
+const { NODE_ENV, JWT_SECRET } = require('../config');
+const { errors } = require('celebrate');
 
-const createUser = (req, res, next) => {
-  const {
-    email,
-    password,
-    name,
-    about,
-    avatar,
-  } = req.body;
-
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      email, password: hash, name, about, avatar,
-    }))
-    .then((user) => {
-      const noPasswordUser = user.toObject({ useProjection: true });
-      return res.send(noPasswordUser);
-    })
-    .catch((error) => {
-      if (error.name === 'ValidationError') {
-        return next(new RequestError('Переданы некорректные данные при создании пользователя'));
-      }
-      if (error.code === 11000) {
-        return next(new ConflictError('Пользователь с указанным e-mail уже зарегистрирован.'));
-      }
-      return next(error);
-    });
+const checkData = (data) => {
+  if (!data) throw new NotFoundError(USER_NOT_FOUND_MESSAGE);
 };
 
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-
-  return User.findUserByCredentials(email, password)
-    .then((user) => {
-      res.send({
-        token: jwt.sign(
-          { _id: user._id },
-          'some-secret-key',
-          { expiresIn: '7d' },
-        ),
-      });
-    })
-    .catch((error) => {
-      if (error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
-    });
+module.exports.getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({});
+    return res.send(users);
+  } catch (error) {
+    return next(error);
+  }
 };
 
-const getUserInfo = (req, res) => {
+const handleGetUserError = (next, error) => {
+  if (error instanceof CastError) {
+    return next(new BadRequestError(INCORRECT_USER_DATA_MESSAGE));
+  }
+  return next(error);
+};
+
+const findUserById = async (res, next, userId) => {
+  try {
+    const user = await User.findById(userId);
+    checkData(user);
+    return res.send(user);
+  } catch (error) {
+    return handleGetUserError(next, error);
+  }
+};
+
+module.exports.getUser = async (req, res, next) => {
+  const { userId } = req.params;
+  await findUserById(res, next, userId);
+};
+
+module.exports.getCurrentUser = async (req, res, next) => {
   const userId = req.user._id;
-
-  User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Пользователь не найден');
-      }
-
-      res.send(user);
-    })
-    .catch(() => res
-      .status(ERROR_CODE_DEFAULT)
-      .send({ message: defaultErrorMessage }));
+  await findUserById(res, next, userId);
 };
 
-const getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.send(users))
-    .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
-};
-
-const getUser = (req, res) => {
-  const { id } = req.params;
-
-  User.findById(id)
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((error) => {
-      if (error.name === 'DocumentNotFoundError') {
-        throw new NotFoundError('Запрашиваемый пользователь не найден');
-      }
-      if (error.name === 'CastError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Передан некорректный id пользователя' });
-      }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+module.exports.createUser = async (req, res, next) => {
+  try {
+    const {
+      name,
+      about,
+      avatar,
+      email,
+      password
+    } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    let user = await User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
     });
+    user = user.toObject();
+    delete user.password;
+    return res.send(user);
+  } catch (error) {
+    if (error.code === 11000) {
+      return next(new ConflictRequestError(NOT_UNIQUE_EMAIL_ERROR_MESSAGE));
+    }
+    if (error instanceof ValidationError) {
+      return next(BadRequestError(INCORRECT_ADD_USER_DATA_MESSAGE));
+    }
+    return next(error);
+  }
 };
 
-const updateProfile = (req, res) => {
+const handleUpdateUserError = (next, error, avatar) => {
+  if (error instanceof ValidationError) {
+    return next(new BadRequestError(
+      !avatar
+        ? INCORRECT_ADD_USER_DATA_MESSAGE
+        : INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
+    ));
+  }
+  return next(error);
+};
+
+const updateUserData = async (req, res, next, data) => {
+  try {
+    const { _id } = req.user;
+    const user = await User.findByIdAndUpdate(_id, data, {
+      new: true,
+      runValidators: true,
+    });
+    checkData(user);
+    return res.send(user);
+  } catch (error) {
+    return handleUpdateUserError(next, error, data.avatar);
+  }
+};
+
+module.exports.updateUserInfo = async (req, res, next) => {
   const { name, about } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((error) => {
-      if (error.name === 'DocumentNotFoundError') {
-        throw new NotFoundError('Запрашиваемый пользователь не найден');
-      }
-      if (error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
-      }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
-    });
+  await updateUserData(req, res, next, { name, about });
 };
 
-const updateAvatar = (req, res) => {
+module.exports.updateUserAvatar = async (req, res, next) => {
   const { avatar } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((error) => {
-      if (error.name === 'DocumentNotFoundError') {
-        throw new NotFoundError('Запрашиваемый пользователь не найден');
-      }
-      if (error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
-      }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
-    });
+  await updateUserData(req, res, next, { avatar });
 };
 
-module.exports = {
-  createUser,
-  getUsers,
-  getUser,
-  updateProfile,
-  updateAvatar,
-  login,
-  getUserInfo,
+module.exports.login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const { _id: userId } = await User.findUserByCredentials(email, password);
+    const token = jwt.sign(
+      { _id: userId },
+      NODE_ENV === 'production' ? JWT_SECRET : 'very-secret-word',
+      { expiresIn: '7d' },
+    );
+    return res.cookie('jwt', token, {
+      maxAge: 3600000 * 24 * 7,
+      httpOnly: true,
+      sameSite: true,
+    })
+      .send({ _id: userId });
+  } catch (error) {
+    return next(error);
+  }
 };
