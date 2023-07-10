@@ -1,99 +1,75 @@
-const { Error: { ValidationError, CastError } } = require('mongoose');
 const Card = require('../models/card');
 
-const {
-  CARD_NOT_FOUND_MESSAGE,
-  INCORRECT_ADD_CARD_MESSAGE,
-  INCORRECT_LIKE_CARD_MESSAGE,
-  INCORRECT_CARD_DATA_MESSAGE,
-  NO_RIGHT_TO_DELETE_ERROR_MESSAGE,
-} = require('../utils/constants');
-const BadRequestError = require('../errors/BadRequestError');
-const NotFoundError = require('../errors/NotFoundError');
 const ForbiddenError = require('../errors/ForbiddenError');
+const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
 
-const checkData = (data) => {
-  if (!data) throw new NotFoundError(CARD_NOT_FOUND_MESSAGE);
+module.exports.getCards = (req, res, next) => {
+  Card.find({})
+    .then((cards) => res.status(200).send(cards))
+    .catch(next);
 };
 
-module.exports.getCards = async (req, res, next) => {
-  try {
-    const cards = await Card.find({});
-    return res.send(cards);
-  } catch (error) {
-    return next(error);
-  }
+module.exports.deleteCard = (req, res, next) => {
+  const currentUserId = req.user._id;
+
+  Card.findById(req.params.cardId)
+    .orFail()
+    .then((card) => {
+      const ownerId = card.owner.toString();
+      if (ownerId !== currentUserId) {
+        throw new ForbiddenError('Вы не автор этой карточки.');
+      }
+      return card;
+    })
+    .then((card) => Card.deleteOne(card))
+    .then((card) => res.status(200).send(card))
+    .catch((err) => {
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError('Карточка с указанным id не найдена.'));
+      }
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Передан некорректный id карточки.'));
+      }
+      return next(err);
+    });
 };
 
-module.exports.createCard = async (req, res, next) => {
-  try {
-    const owner = req.user._id;
-    const { name, link } = req.body;
-    const card = await Card.create({ name, link, owner });
-    return res.send(card);
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      return next(new BadRequestError(INCORRECT_ADD_CARD_MESSAGE));
-    }
-  }
+module.exports.createCard = (req, res, next) => {
+  const { name, link } = req.body;
+
+  Card.create({ name, link, owner: req.user._id })
+    .then((card) => res.status(201).send(card))
+
+    .catch(next);
 };
 
-module.exports.deleteCard = async (req, res, next) => {
-  try {
-    const { cardId } = req.params;
-    const card = await Card.findById(cardId);
-    checkData(card);
-
-    const ownerId = card.owner.valueOf();
-    const userId = req.user._id;
-    if (ownerId !== userId) {
-      return next(new ForbiddenError(NO_RIGHT_TO_DELETE_ERROR_MESSAGE));
-    }
-
-    await card.deleteOne();
-    return res.send(card);
-  } catch (error) {
-    if (error instanceof CastError) {
-      return next(new BadRequestError(INCORRECT_CARD_DATA_MESSAGE));
-    }
-    return next(error);
-  }
+module.exports.addLikeCard = (req, res, next) => {
+  Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
+    .orFail()
+    .then((card) => res.status(200).send(card))
+    .catch((err) => {
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError('Карточка с указанным id не найдена.'));
+      }
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Передан некорректный id карточки.'));
+      }
+      return next(err);
+    });
 };
 
-const handleLikeError = (next, error) => {
-  if (error instanceof CastError) {
-    return next(new BadRequestError(INCORRECT_LIKE_CARD_MESSAGE));
-  }
-  return next(error);
-};
-
-module.exports.likeCard = async (req, res, next) => {
-  try {
-    const { cardId } = req.params;
-    const { _id } = req.user;
-    const card = await Card.findByIdAndUpdate(
-      cardId,
-      { $addToSet: { likes: _id } },
-      { new: true },
-    ).populate('likes');
-    checkData(card);
-  } catch (error) {
-    return handleLikeError(next, error);
-  }
-};
-
-module.exports.dislikeCard = async (req, res, next) => {
-  try {
-    const { cardId } = req.params;
-    const { _id } = req.user;
-    const card = await Card.findByIdAndUpdate(
-      cardId,
-      { $pull: { likes: _id } },
-      { new: true },
-    );
-    checkData(card);
-    return res.send(card.likes);
-  } catch (error) {
-    return handleLikeError(next, error);
-  }
+module.exports.dislikeCard = (req, res, next) => {
+  Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
+    .orFail()
+    .then((card) => res.status(200).send(card))
+    .catch((err) => {
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError('Карточка с указанным id не найдена.'));
+      }
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Передан некорректный id карточки.'));
+      }
+      return next(err);
+    });
 };

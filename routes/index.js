@@ -1,33 +1,23 @@
 const router = require('express').Router();
-const { celebrate, Joi } = require('celebrate');
-const usersRouter = require('./users');
-const cardsRouter = require('./cards');
-const { createUser, login } = require('../controllers/users');
+
+const { errors } = require('celebrate');
 const NotFoundError = require('../errors/NotFoundError');
-const { auth } = require('../middlewares/auth');
-const { URL_REGEX } = require('../utils/constants');
 
-router.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), login);
+const cardsRouter = require('./cards');
+const usersRouter = require('./users');
 
-router.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().regex(URL_REGEX),
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), createUser);
+const { login, createUser } = require('../controllers/users');
+const { validateCreateUserRequest, validateLoginRequest } = require('../middlewares/requestValidation');
 
-router.use('/users', auth, usersRouter);
+const auth = require('../middlewares/auth');
 
-router.use('/cards', auth, cardsRouter);
+router.post('/signin', validateLoginRequest, login);
+router.post('/signup', validateCreateUserRequest, createUser);
 
-router.all('*', (req, res, next) => next(new NotFoundError('Неверный URL запроса')));
+router.use(auth);
+router.use('/users', usersRouter);
+router.use('/cards', cardsRouter);
+router.use('/*', (req, res, next) => next(new NotFoundError('Запись не найдена.')));
+router.use(errors({ message: 'Ошибка валидации данных!' }));
 
 module.exports = router;

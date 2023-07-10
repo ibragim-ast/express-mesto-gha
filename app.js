@@ -1,51 +1,29 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const bodyParser = require('body-parser');
 
-const auth = require('./middlewares/auth');
-
-const {
-  login,
-  createUser,
-} = require('./controllers/users');
+const { PORT, DB_URI } = require('./config');
 
 const app = express();
 
-const { PORT = 3000 } = process.env;
+const errorHandler = require('./middlewares/errorHandler');
 
-mongoose.connect('mongodb://localhost:27017/mestodb');
+(async () => {
+  try {
+    await mongoose.connect(DB_URI);
+    console.log('Соединение с базой данных установлено');
+  } catch (error) {
+    console.log(`Ошибка соединения с базой данных ${error.message}`);
+  }
+})();
 
-app.use(bodyParser.json());
+app.use(express.json());
 
-const { ERROR_CODE_NOT_FOUND, ERROR_CODE_DEFAULT, defaultErrorMessage } = require('./utils/constants');
+mongoose.connect(DB_URI, {});
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Слишком много запросов с вашего IP, попробуйте позже',
-});
+app.use('/', require('./routes/index'));
 
-const cardsRouter = require('./routes/cards');
-const usersRouter = require('./routes/users');
-
-app.use(helmet());
-app.use(limiter);
-app.post('/signin', login);
-app.post('/signup', createUser);
-app.use(auth);
-app.use('/users', usersRouter);
-app.use('/cards', cardsRouter);
-app.use('/*', (req, res) => {
-  res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запись не найдена!' });
-});
-app.use((err, req, res, next) => {
-  res
-    .status(ERROR_CODE_DEFAULT)
-    .send({ message: defaultErrorMessage });
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log('Сервер запущен');
+  console.log(`Приложение слушает порт ${PORT}`);
 });

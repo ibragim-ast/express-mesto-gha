@@ -36,10 +36,9 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: 8,
     select: false,
   },
-}, { versionKey: false });
+});
 
 const checkData = (data) => {
   if (!data) throw new UnauthorizedError(INVALID_AUTH_DATA_ERROR_MESSAGE);
@@ -55,4 +54,4 @@ userSchema.statics.findUserByCredentials = async function checkUserData(email, p
   return user;
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('user', userSchema);
