@@ -1,8 +1,8 @@
 const Card = require('../models/card');
 
-const ForbiddenError = require('../errors/ForbiddenError');
-const NotFoundError = require('../errors/NotFoundError');
-const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/forbiddenError');
+const NotFoundError = require('../errors/notFoundError');
+const RequestError = require('../errors/requestError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -29,7 +29,7 @@ module.exports.deleteCard = (req, res, next) => {
         return next(new NotFoundError('Карточка с указанным id не найдена.'));
       }
       if (err.name === 'CastError') {
-        return next(new BadRequestError('Передан некорректный id карточки.'));
+        return next(new RequestError('Передан некорректный id карточки.'));
       }
       return next(err);
     });
@@ -53,13 +53,13 @@ module.exports.addLikeCard = (req, res, next) => {
         return next(new NotFoundError('Карточка с указанным id не найдена.'));
       }
       if (err.name === 'CastError') {
-        return next(new BadRequestError('Передан некорректный id карточки.'));
+        return next(new RequestError('Передан некорректный id карточки.'));
       }
       return next(err);
     });
 };
 
-module.exports.dislikeCard = (req, res, next) => {
+module.exports.deleteLikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .orFail()
     .then((card) => res.status(200).send(card))
@@ -68,7 +68,7 @@ module.exports.dislikeCard = (req, res, next) => {
         return next(new NotFoundError('Карточка с указанным id не найдена.'));
       }
       if (err.name === 'CastError') {
-        return next(new BadRequestError('Передан некорректный id карточки.'));
+        return next(new RequestError('Передан некорректный id карточки.'));
       }
       return next(err);
     });

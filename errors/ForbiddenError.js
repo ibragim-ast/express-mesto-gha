@@ -1,10 +1,6 @@
-const { ERROR_CODE_403 } = require('../utils/constants');
-
-class ForbiddenError extends Error {
+module.exports = class ForbiddenError extends Error {
   constructor(message) {
     super(message);
-    this.statusCode = ERROR_CODE_403;
+    this.statusCode = 403;
   }
-}
-
-module.exports = ForbiddenError;
+};

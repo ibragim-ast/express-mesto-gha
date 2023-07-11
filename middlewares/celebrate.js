@@ -1,61 +1,62 @@
 const { celebrate, Joi } = require('celebrate');
-const { URL_REGEX } = require('../utils/constants');
 
-const validateCreateUserRequest = celebrate({
+const linkPattern = /(https?:\/\/)(w{3}\.)?\w+[-.~:/?#[\]@!$&'()*+,;=]*#?/;
+
+const createUserJoi = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: Joi.string().required().min(1),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(URL_REGEX),
+    avatar: Joi.string().pattern(linkPattern),
   }),
 });
 
-const validateLoginRequest = celebrate({
+const loginJoi = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: Joi.string().required().min(1),
   }),
 });
 
-const validateGetUserById = celebrate({
+const getUserByIdJoi = celebrate({
   params: Joi.object().keys({
     userId: Joi.string().required().hex().length(24),
   }),
 });
 
-const validateUpdateAvatar = celebrate({
+const updateAvatarJoi = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().pattern(URL_REGEX),
+    avatar: Joi.string().required().pattern(linkPattern),
   }),
 });
 
-const validateUpdateUser = celebrate({
+const updateUserJoi = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
   }),
 });
 
-const validateCreateCard = celebrate({
+const createCardJoi = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required().pattern(URL_REGEX),
+    link: Joi.string().required().pattern(linkPattern),
   }),
 });
 
-const validateCheckCardIdRequest = celebrate({
+const checkCardIdJoi = celebrate({
   params: Joi.object().keys({
     cardId: Joi.string().required().hex().length(24),
   }),
 });
 
 module.exports = {
-  validateCreateUserRequest,
-  validateLoginRequest,
-  validateGetUserById,
-  validateUpdateAvatar,
-  validateUpdateUser,
-  validateCreateCard,
-  validateCheckCardIdRequest,
+  createUserJoi,
+  loginJoi,
+  getUserByIdJoi,
+  updateAvatarJoi,
+  updateUserJoi,
+  createCardJoi,
+  checkCardIdJoi,
 };
