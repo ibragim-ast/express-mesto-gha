@@ -1,20 +1,13 @@
 const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const { Joi, celebrate, errors } = require('celebrate');
-const { auth } = require('./middlewares/auth');
-const { URL_REGEX } = require('./utils/constants');
+const { errors } = require('celebrate');
+const { PORT, DB_URI } = require('./config');
 const errorsHandler = require('./middlewares/errorsHandler');
+const router = require('./routes');
 
-const { ERROR_CODE_NOT_FOUND } = require('./utils/constants');
-
-const app = express();
-
-const { PORT = 3000 } = process.env;
-
-mongoose.connect('mongodb://localhost:27017/mestodb')
+mongoose.connect(DB_URI)
   .then(() => {
     console.log('Успешное подключение к базе данных');
   })
@@ -23,20 +16,19 @@ mongoose.connect('mongodb://localhost:27017/mestodb')
     process.exit(1);
   });
 
-app.use(bodyParser.json());
-
+const app = express();
 app.use(helmet());
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.use(router);
+
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Слишком много запросов с вашего IP, попробуйте позже',
 }));
-
-
-
-app.use('/*', (req, res) => {
-  res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запись не найдена!' });
-});
 
 app.use(errors());
 

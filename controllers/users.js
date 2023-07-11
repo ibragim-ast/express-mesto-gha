@@ -7,7 +7,7 @@ const User = require('../models/user');
 
 const {
   BAD_REQUEST_ERROR,
-  NOT_FOUND_ERROR,
+  ERROR_404,
   INTERNAL_SERVER_ERROR,
   UNAUTHORIZED_ERROR,
   SERVER_ERROR_MESSAGE,
@@ -69,7 +69,7 @@ module.exports.getUser = (req, res) => {
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(NOT_FOUND_ERROR).send({ message: 'Запрашиваемый пользователь не найден' });
+        return res.status(ERROR_404).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       if (error.name === 'CastError') {
         return res.status(BAD_REQUEST_ERROR).send({ message: 'Передан некорректный id пользователя' });
@@ -86,7 +86,7 @@ module.exports.updateProfile = (req, res) => {
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(NOT_FOUND_ERROR).send({ message: 'Запрашиваемый пользователь не найден' });
+        return res.status(ERROR_404).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       if (error.name === 'ValidationError') {
         return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
@@ -103,7 +103,7 @@ module.exports.updateAvatar = (req, res) => {
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(NOT_FOUND_ERROR).send({ message: 'Запрашиваемый пользователь не найден' });
+        return res.status(ERROR_404).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       if (error.name === 'ValidationError') {
         return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
