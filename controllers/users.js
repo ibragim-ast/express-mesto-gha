@@ -1,13 +1,22 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Error: { ValidationError, CastError } } = require('mongoose');
+
+const NOT_FOUND_ERROR = require('../errors/NotFoundError');
 const User = require('../models/user');
 
 const {
-  ERROR_CODE_INVALID_DATA,
-  ERROR_CODE_NOT_FOUND,
-  ERROR_CODE_DEFAULT,
-  defaultErrorMessage,
+  BAD_REQUEST_ERROR,
+  NOT_FOUND_ERROR,
+  INTERNAL_SERVER_ERROR,
+  UNAUTHORIZED_ERROR,
+  SERVER_ERROR_MESSAGE,
+  USER_NOT_FOUND_MESSAGE,
 } = require('../utils/constants');
+
+const checkData = (data) => {
+  if (!data) throw
+}
 
 module.exports.createUser = (req, res) => {
   bcrypt.hash(req.body.password, 10)
@@ -24,7 +33,7 @@ module.exports.createUser = (req, res) => {
         _id: user._id,
         email: user.email,
       }))
-    .catch((error) => res.status(ERROR_CODE_INVALID_DATA).send(error));
+    .catch((error) => res.status(BAD_REQUEST_ERROR).send(error));
 };
 
 module.exports.login = (req, res) => {
@@ -41,7 +50,7 @@ module.exports.login = (req, res) => {
     })
     .catch((err) => {
       res
-        .status(401)
+        .status(UNAUTHORIZED_ERROR)
         .send({ message: err.message });
     });
 };
@@ -49,7 +58,7 @@ module.exports.login = (req, res) => {
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send(SERVER_ERROR_MESSAGE));
 };
 
 module.exports.getUser = (req, res) => {
@@ -60,12 +69,12 @@ module.exports.getUser = (req, res) => {
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+        return res.status(NOT_FOUND_ERROR).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       if (error.name === 'CastError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Передан некорректный id пользователя' });
+        return res.status(BAD_REQUEST_ERROR).send({ message: 'Передан некорректный id пользователя' });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send(SERVER_ERROR_MESSAGE);
     });
 };
 
@@ -77,12 +86,12 @@ module.exports.updateProfile = (req, res) => {
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+        return res.status(NOT_FOUND_ERROR).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       if (error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
+        return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send(SERVER_ERROR_MESSAGE);
     });
 };
 
@@ -94,11 +103,11 @@ module.exports.updateAvatar = (req, res) => {
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+        return res.status(NOT_FOUND_ERROR).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       if (error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
+        return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send(SERVER_ERROR_MESSAGE);
     });
 };

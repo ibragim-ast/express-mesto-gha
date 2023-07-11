@@ -1,10 +1,9 @@
 const Card = require('../models/card');
 
 const {
-  ERROR_CODE_INVALID_DATA,
-  ERROR_CODE_NOT_FOUND,
-  ERROR_CODE_DEFAULT,
-  defaultErrorMessage,
+  BAD_REQUEST_ERROR,
+  NOT_FOUND_ERROR,
+  INTERNAL_SERVER_ERROR,
 } = require('../utils/constants');
 
 const createCard = (req, res) => {
@@ -14,18 +13,18 @@ const createCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({
+        return res.status(BAD_REQUEST_ERROR).send({
           message: 'Переданы некорректные данные при создании карточки.',
         });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера' });
     });
 };
 
 const getCards = (req, res) => {
   Card.find({})
     .then((cards) => res.status(200).send(cards))
-    .catch(() => res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage }));
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера' }));
 };
 
 const deleteCard = (req, res) => {
@@ -34,16 +33,16 @@ const deleteCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({
+        return res.status(NOT_FOUND_ERROR).send({
           message: 'Запрашиваемая карточка не найдена',
         });
       }
       if (error.name === 'CastError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({
+        return res.status(BAD_REQUEST_ERROR).send({
           message: 'Некорректный формат id карточки.',
         });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера' });
     });
 };
 
@@ -53,16 +52,16 @@ const likeCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({
+        return res.status(NOT_FOUND_ERROR).send({
           message: 'Запрашиваемая карточка не найдена',
         });
       }
       if (error.name === 'CastError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({
+        return res.status(BAD_REQUEST_ERROR).send({
           message: 'Переданы некорректные данные для постановки лайка.',
         });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера' });
     });
 };
 
@@ -72,16 +71,16 @@ const dislikeCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((error) => {
       if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_NOT_FOUND).send({
+        return res.status(NOT_FOUND_ERROR).send({
           message: 'Запрашиваемая карточка не найдена',
         });
       }
       if (error.name === 'CastError') {
-        return res.status(ERROR_CODE_INVALID_DATA).send({
+        return res.status(BAD_REQUEST_ERROR).send({
           message: 'Переданы некорректные данные для снятия лайка.',
         });
       }
-      return res.status(ERROR_CODE_DEFAULT).send({ message: defaultErrorMessage });
+      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера' });
     });
 };
 
