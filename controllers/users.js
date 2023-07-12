@@ -89,7 +89,7 @@ const handleUpdateUserError = (next, error, avatar) => {
 const UpdateUserData = (req, res, next, data) => {
   const { _id } = req.user;
 
-  User.findByIdAndDelete(_id, data, {
+  User.findByIdAndUpdate(_id, data, {
     new: true,
     runValidators: true,
   })
