@@ -6,6 +6,12 @@ const INTERNAL_SERVER_ERROR = 500;
 const SERVER_ERROR_MESSAGE = 'Ошибка сервера';
 const USER_NOT_FOUND_MESSAGE = 'Пользователь с указанным _id не найден';
 const INCORRECT_USER_DATA_MESSAGE = 'Переданы некорректные данные пользователя';
+const UNAUTHORIZED_ERROR_MESSAGE = 'Необходима авторизация';
+const CARD_NOT_FOUND_MESSAGE = 'Карточка с указанным _id не найдена';
+const INCORRECT_ADD_CARD_DATA_MESSAGE = 'Переданы некорректные данные при создании карточки';
+const INCORRECT_LIKE_CARD_DATA_MESSAGE = 'Переданы некорректные данные для постановки/снятии лайка';
+const INCORRECT_CARD_DATA_MESSAGE = 'Переданы некорректные данные карточки';
+const NO_RIGHTS_TO_DELETE_ERROR_MESSAGE = 'у вас нет прав на удалений данной карточки';
 
 module.exports = {
   BAD_REQUEST_ERROR,
@@ -16,4 +22,10 @@ module.exports = {
   USER_NOT_FOUND_MESSAGE,
   INCORRECT_USER_DATA_MESSAGE,
   URL_REGEX,
+  CARD_NOT_FOUND_MESSAGE,
+  INCORRECT_ADD_CARD_DATA_MESSAGE,
+  INCORRECT_LIKE_CARD_DATA_MESSAGE,
+  INCORRECT_CARD_DATA_MESSAGE,
+  NO_RIGHTS_TO_DELETE_ERROR_MESSAGE,
+  UNAUTHORIZED_ERROR_MESSAGE,
 };
