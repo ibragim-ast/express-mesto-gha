@@ -60,7 +60,9 @@ module.exports.createUser = (req, res, next) => {
     .then((createdUser) => {
       const user = createdUser.toObject();
       delete user.password;
-      return res.send(user);
+      return res
+        .statusCode(200)
+        .send(user);
     })
     .catch((error) => {
       if (error.code === 11000) {
