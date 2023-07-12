@@ -59,6 +59,8 @@ module.exports.deleteCard = (req, res, next) => {
     .catch((error) => {
       if (error instanceof CastError) {
         next(new BadRequestError(INCORRECT_CARD_DATA_MESSAGE));
+      } else if (error instanceof ForbiddenError) {
+        next(error);
       } else {
         next(error);
       }
