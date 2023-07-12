@@ -66,19 +66,19 @@ module.exports.dislikeCard = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
+
   Card.findById(cardId)
     .then((card) => {
       checkData(card);
 
-      const ownerId = card.owner.valueOf();
+      const ownerId = card.owner.toString();
       const userId = req.user._id;
       if (ownerId !== userId) {
-        return next(new ForbiddenError(NO_RIGHTS_TO_DELETE_ERROR_MESSAGE));
+        throw new ForbiddenError(NO_RIGHTS_TO_DELETE_ERROR_MESSAGE);
       }
-
-      return card.deleteOne();
+      return card;
     })
-    .then((deletedCard) => res.send(deletedCard))
+    .then((card) => Card.deleteOne(card))
     .then((card) => res.status(200).send(card))
     .catch((error) => {
       if (error instanceof CastError) {
