@@ -4,29 +4,26 @@ const { Error: { ValidationError, CastError } } = require('mongoose');
 const User = require('../models/user');
 
 const {
-  BAD_REQUEST_ERROR,
-  ERROR_404,
-  INTERNAL_SERVER_ERROR,
-  UNAUTHORIZED_ERROR,
-  SERVER_ERROR_MESSAGE,
   USER_NOT_FOUND_MESSAGE,
   INCORRECT_USER_DATA_MESSAGE,
+  INCORRECT_UPDATE_USER_DATA_MESSAGE,
+  INCORRECT_ADD_USER_DATA_MESSAGE,
+  NOT_UNIQUE_EMAIL_ERROR_MESSAGE,
+  INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
 } = require('../utils/constants');
 const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
+const ConflictingRequestError = require('../errors/ConflictingRequestError');
 
 const checkData = (data) => {
   if (!data) throw new NotFoundError(USER_NOT_FOUND_MESSAGE);
 };
 
-module.exports.getUsers = (req, res, next) => {
+module.exports.getAllUsersInfo = (req, res, next) => {
   User.find({})
-    .then((users) => {
-      res.send(users);
-    })
-    .catch((error) => {
-      next(error);
-    });
+    .then((users) => res.send(users))
+
+    .catch(next);
 };
 
 const handleGetUserError = (next, error) => {
@@ -47,30 +44,71 @@ const findUser = (res, next, userId) => {
     });
 };
 
-module.exports.getUser = async (req, res, next) => {
-  const { userId } = req.params;
-  await findUser(res, next, userId);
-};
+module.exports.getUserInfoById = (req, res, next) => findUser(res, next, req.params.userId);
 
-module.exports.createUser = (req, res) => {
-  bcrypt.hash(req.body.password, 10)
+module.exports.getCurrentUser = (req, res, next) => findUser(res, next, req.user._id);
+
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
     .then((hash) => User.create({
-      email: req.body.email,
-      password: hash,
-      name: req.body.name,
-      about: req.body.about,
-      avatar: req.body.avatar,
+      name, about, avatar, email, password: hash,
     }))
-    .then((user) => res
-      .status(201)
-      .send({
-        _id: user._id,
-        email: user.email,
-      }))
-    .catch((error) => res.status(BAD_REQUEST_ERROR).send(error));
+    .then((createdUser) => {
+      const user = createdUser.toObject();
+      delete user.password;
+      return res.send(user);
+    })
+    .catch((error) => {
+      if (error.code === 11000) {
+        return next(new ConflictingRequestError(NOT_UNIQUE_EMAIL_ERROR_MESSAGE));
+      }
+      if (error instanceof ValidationError) {
+        return next(new BadRequestError(INCORRECT_ADD_USER_DATA_MESSAGE));
+      }
+      return next(error);
+    });
 };
 
-module.exports.login = (req, res) => {
+const handleUpdateUserError = (next, error, avatar) => {
+  if (error instanceof ValidationError) {
+    return next(BadRequestError(
+      !avatar
+        ? INCORRECT_UPDATE_USER_DATA_MESSAGE
+        : INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
+    ));
+  }
+  return next(error);
+};
+
+const UpdateUserData = (req, res, next, data) => {
+  const { _id } = req.user;
+
+  User.findByIdAndDelete(_id, data, {
+    new: true,
+    runValidators: true,
+  })
+    .then((user) => {
+      checkData(user);
+      return res.send(user);
+    })
+    .catch((error) => handleUpdateUserError(next, error, data.avatar));
+};
+
+module.exports.updateUserInfo = (req, res, next) => {
+  const { name, about } = req.body;
+  return UpdateUserData(req, res, next, { name, about });
+};
+
+module.exports.updateUserAvatar = (req, res, next) => {
+  const { avatar } = req.body;
+  return UpdateUserData(req, res, next, { avatar });
+};
+
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
@@ -82,43 +120,5 @@ module.exports.login = (req, res) => {
       );
       res.send({ token });
     })
-    .catch((err) => {
-      res
-        .status(UNAUTHORIZED_ERROR)
-        .send({ message: err.message });
-    });
-};
-
-module.exports.updateProfile = (req, res) => {
-  const { name, about } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((error) => {
-      if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_404).send({ message: 'Запрашиваемый пользователь не найден' });
-      }
-      if (error.name === 'ValidationError') {
-        return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
-      }
-      return res.status(INTERNAL_SERVER_ERROR).send(SERVER_ERROR_MESSAGE);
-    });
-};
-
-module.exports.updateAvatar = (req, res) => {
-  const { avatar } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((error) => {
-      if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_404).send({ message: 'Запрашиваемый пользователь не найден' });
-      }
-      if (error.name === 'ValidationError') {
-        return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
-      }
-      return res.status(INTERNAL_SERVER_ERROR).send(SERVER_ERROR_MESSAGE);
-    });
+    .catch(next);
 };
