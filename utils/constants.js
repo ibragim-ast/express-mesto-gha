@@ -17,6 +17,7 @@ const INCORRECT_UPDATE_USER_DATA_MESSAGE = ' Переданы некоррект
 const INCORRECT_ADD_USER_DATA_MESSAGE = 'Переданы некорректные данные при создании пользователя';
 const NOT_UNIQUE_EMAIL_ERROR_MESSAGE = 'Пользователь с таким email уже зарегистрирован';
 const INCORRECT_UPDATE_AVATAR_DATA_MESSAGE = 'Переданы некорректные данные при обновлении аватара';
+const INVALID_AUTH_DATA_ERROR_MESSAGE = 'Неправильные почта или пароль';
 
 module.exports = {
   BAD_REQUEST_ERROR,
@@ -38,4 +39,5 @@ module.exports = {
   INCORRECT_ADD_USER_DATA_MESSAGE,
   NOT_UNIQUE_EMAIL_ERROR_MESSAGE,
   INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
+  INVALID_AUTH_DATA_ERROR_MESSAGE,
 };

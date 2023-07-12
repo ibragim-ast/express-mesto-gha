@@ -1,51 +1,61 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const isEmail = require('validator/lib/isEmail');
+const { isEmail } = require('validator');
+const { INCORRECT_ADD_CARD_DATA_MESSAGE, URL_REGEX, INVALID_AUTH_DATA_ERROR_MESSAGE } = require('../utils/constants');
+const UnauthorizedError = require('../errors/UnauthorizedError');
+
 
 const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    minlength: 2,
+    maxlength: 30,
+    default: 'Жак-Ив Кусто',
+  },
+  about: {
+    type: String,
+    minlength: 2,
+    maxlength: 30,
+    default: 'Исследователь',
+  },
+  avatar: {
+    type: String,
+    default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator: (url) => URL_REGEX.test(url),
+    },
+  },
   email: {
     type: String,
     required: true,
     unique: true,
     validate: {
-      validator: (v) => isEmail(v),
+      validator: (value) => isEmail(value),
       message: 'Неправильный формат почты',
     },
   },
   password: {
     type: String,
     required: true,
-    minlength: 8,
-  },
-  name: {
-    type: String,
-    minLength: 2,
-    maxlength: 30,
-  },
-  about: {
-    type: String,
-    minlength: 2,
-    maxlength: 30,
-  },
-  avatar: {
-    type: String,
+    select: false,
   },
 });
 
+const checkData = (data) => {
+  if (!data) throw new UnauthorizedError(INVALID_AUTH_DATA_ERROR_MESSAGE);
+};
+
 // eslint-disable-next-line func-names
 userSchema.statics.findUserByCredentials = function (email, password) {
-  return this.findOne({ email })
+  const User = this;
+
+  return User.findOne({ email }).select('+password')
     .then((user) => {
-      if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
-      }
+      checkData(user);
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
-          if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
-          }
-
+          checkData(matched);
           return user;
         });
     });
