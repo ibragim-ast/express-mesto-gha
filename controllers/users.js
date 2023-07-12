@@ -61,7 +61,7 @@ module.exports.createUser = (req, res, next) => {
       const user = createdUser.toObject();
       delete user.password;
       return res
-        .statusCode(200)
+        .status(201)
         .send(user);
     })
     .catch((error) => {
