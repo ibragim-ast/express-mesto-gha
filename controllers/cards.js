@@ -50,7 +50,7 @@ module.exports.deleteCard = (req, res, next) => {
       const ownerId = card.owner.valueOf();
       const userId = req.user._id;
       if (ownerId !== userId) {
-        throw new ForbiddenError(NO_RIGHTS_TO_DELETE_ERROR_MESSAGE);
+        return next(new ForbiddenError(NO_RIGHTS_TO_DELETE_ERROR_MESSAGE));
       }
 
       return card.deleteOne();
@@ -59,8 +59,6 @@ module.exports.deleteCard = (req, res, next) => {
     .catch((error) => {
       if (error instanceof CastError) {
         next(new BadRequestError(INCORRECT_CARD_DATA_MESSAGE));
-      } else if (error instanceof ForbiddenError) {
-        next(error);
       } else {
         next(error);
       }
