@@ -1,6 +1,7 @@
 const URL_REGEX = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]+\.[a-zA-Z0-9()]+\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
 const BAD_REQUEST_ERROR = 400;
 const ERROR_401 = 401;
+const ERROR_403 = 403;
 const ERROR_404 = 404;
 const ERROR_409 = 409;
 const INTERNAL_SERVER_ERROR = 500;
@@ -22,6 +23,7 @@ const INVALID_AUTH_DATA_ERROR_MESSAGE = 'Неправильные почта и�
 module.exports = {
   BAD_REQUEST_ERROR,
   ERROR_401,
+  ERROR_403,
   ERROR_404,
   ERROR_409,
   INTERNAL_SERVER_ERROR,
