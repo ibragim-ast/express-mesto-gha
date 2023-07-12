@@ -15,17 +15,12 @@ const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
 const ConflictingRequestError = require('../errors/ConflictingRequestError');
 
+// Функция проверки наличия данных
 const checkData = (data) => {
   if (!data) throw new NotFoundError(USER_NOT_FOUND_MESSAGE);
 };
 
-module.exports.getAllUsersInfo = (req, res, next) => {
-  User.find({})
-    .then((users) => res.send(users))
-
-    .catch(next);
-};
-
+// Функция обработки ошибки получения пользователя
 const handleGetUserError = (next, error) => {
   if (error instanceof CastError) {
     return next(new BadRequestError(INCORRECT_USER_DATA_MESSAGE));
@@ -33,6 +28,7 @@ const handleGetUserError = (next, error) => {
   return next(error);
 };
 
+// Функция поиска пользователя по ID
 const findUser = (res, next, userId) => {
   User.findById(userId)
     .then((user) => {
@@ -44,10 +40,34 @@ const findUser = (res, next, userId) => {
     });
 };
 
-module.exports.getUserInfoById = (req, res, next) => findUser(res, next, req.params.userId);
+// Функция обработки ошибки обновления пользователя
+const handleUpdateUserError = (next, error, avatar) => {
+  if (error instanceof ValidationError) {
+    return next(BadRequestError(
+      !avatar
+        ? INCORRECT_UPDATE_USER_DATA_MESSAGE
+        : INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
+    ));
+  }
+  return next(error);
+};
 
-module.exports.getCurrentUser = (req, res, next) => findUser(res, next, req.user._id);
+// Функция обновления информации о пользователе
+const UpdateUserData = (req, res, next, data) => {
+  const { _id } = req.user;
 
+  User.findByIdAndUpdate(_id, data, {
+    new: true,
+    runValidators: true,
+  })
+    .then((user) => {
+      checkData(user);
+      return res.send(user);
+    })
+    .catch((error) => handleUpdateUserError(next, error, data.avatar));
+};
+
+// Создание нового пользователя
 module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
@@ -75,41 +95,7 @@ module.exports.createUser = (req, res, next) => {
     });
 };
 
-const handleUpdateUserError = (next, error, avatar) => {
-  if (error instanceof ValidationError) {
-    return next(BadRequestError(
-      !avatar
-        ? INCORRECT_UPDATE_USER_DATA_MESSAGE
-        : INCORRECT_UPDATE_AVATAR_DATA_MESSAGE,
-    ));
-  }
-  return next(error);
-};
-
-const UpdateUserData = (req, res, next, data) => {
-  const { _id } = req.user;
-
-  User.findByIdAndUpdate(_id, data, {
-    new: true,
-    runValidators: true,
-  })
-    .then((user) => {
-      checkData(user);
-      return res.send(user);
-    })
-    .catch((error) => handleUpdateUserError(next, error, data.avatar));
-};
-
-module.exports.updateUserInfo = (req, res, next) => {
-  const { name, about } = req.body;
-  return UpdateUserData(req, res, next, { name, about });
-};
-
-module.exports.updateUserAvatar = (req, res, next) => {
-  const { avatar } = req.body;
-  return UpdateUserData(req, res, next, { avatar });
-};
-
+// Аутентификация пользователя
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
@@ -123,4 +109,29 @@ module.exports.login = (req, res, next) => {
       res.send({ token });
     })
     .catch(next);
+};
+
+// Получение информации о всех пользователях
+module.exports.getAllUsersInfo = (req, res, next) => {
+  User.find({})
+    .then((users) => res.send(users))
+    .catch(next);
+};
+
+// Получение информации о пользователе по ID
+module.exports.getUserInfoById = (req, res, next) => findUser(res, next, req.params.userId);
+
+// Получение информации о текущем пользователе
+module.exports.getCurrentUser = (req, res, next) => findUser(res, next, req.user._id);
+
+// Обновление информации о пользователе
+module.exports.updateUserInfo = (req, res, next) => {
+  const { name, about } = req.body;
+  return UpdateUserData(req, res, next, { name, about });
+};
+
+// Обновление аватара пользователя
+module.exports.updateUserAvatar = (req, res, next) => {
+  const { avatar } = req.body;
+  return UpdateUserData(req, res, next, { avatar });
 };

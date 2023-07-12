@@ -9,8 +9,7 @@ const {
 } = require('../controllers/cards');
 const { URL_REGEX } = require('../utils/constants');
 
-router.get('/', getCards);
-
+// Маршрут для создание новой карточки
 router.post('/', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
@@ -18,22 +17,28 @@ router.post('/', celebrate({
   }),
 }), createCard);
 
+// Маршрут для получения списка карточек
+router.get('/', getCards);
+
+// Маршрут для лайка
 router.put('/:cardId/likes', celebrate({
   params: Joi.object().keys({
     cardId: Joi.string().required().length(24).hex(),
   }),
 }), likeCard);
 
-router.delete('/:cardId', celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().required().length(24).hex(),
-  }),
-}), deleteCard);
-
+// Маршрут для дизлайка
 router.delete('/:cardId/likes', celebrate({
   params: Joi.object().keys({
     cardId: Joi.string().required().length(24).hex(),
   }),
 }), dislikeCard);
+
+// Маршрут для удаления карточки
+router.delete('/:cardId', celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().required().length(24).hex(),
+  }),
+}), deleteCard);
 
 module.exports = router;

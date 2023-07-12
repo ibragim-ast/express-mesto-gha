@@ -1,9 +1,11 @@
+/* eslint-disable func-names */
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { isEmail } = require('validator');
 const { URL_REGEX, INVALID_AUTH_DATA_ERROR_MESSAGE } = require('../utils/constants');
 const UnauthorizedError = require('../errors/UnauthorizedError');
 
+// Создание схемы пользователя
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -40,11 +42,12 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+// Функция проверки наличия данных
 const checkData = (data) => {
   if (!data) throw new UnauthorizedError(INVALID_AUTH_DATA_ERROR_MESSAGE);
 };
 
-// eslint-disable-next-line func-names
+// Функция поиска пользователя по email и проверка пароля
 userSchema.statics.findUserByCredentials = function (email, password) {
   const User = this;
 

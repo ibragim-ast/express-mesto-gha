@@ -7,13 +7,7 @@ const NotFoundError = require('../errors/NotFoundError');
 const { auth } = require('../middlewares/auth');
 const { URL_REGEX } = require('../utils/constants');
 
-router.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), login);
-
+// Маршрут для регистрации пользователя
 router.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
@@ -24,10 +18,21 @@ router.post('/signup', celebrate({
   }),
 }), createUser);
 
+// Маршрут для логина
+router.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().min(8),
+  }),
+}), login);
+
+// Маршрутизация к роутеру пользователей
 router.use('/users', auth, usersRouter);
 
+// Маршрутизация к роутеру карточек
 router.use('/cards', auth, cardsRouter);
 
+// Обработка неверного URL запроса
 router.all('*', (req, res, next) => next(new NotFoundError('Неверный URL запроса')));
 
 module.exports = router;
