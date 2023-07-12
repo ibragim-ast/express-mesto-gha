@@ -35,5 +35,5 @@ app.use(errors());
 app.use(errorsHandler);
 
 app.listen(PORT, () => {
-  console.log('Сервер запущен');
+  console.log('Сервер успешно запущен');
 });
