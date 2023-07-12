@@ -10,10 +10,10 @@ const router = require('./routes');
 // Подключение к базе данных MongoDB
 mongoose.connect(DB_URI)
   .then(() => {
-    console.log('Успешное подключение к базе данных');
+    console.log('База данных в нашем распоряжении, Милорд');
   })
   .catch((error) => {
-    console.log('Ошибка подключения к базе данных:', error);
+    console.log('Тут какая-то ошибка:', error);
     process.exit(1);
   });
 
