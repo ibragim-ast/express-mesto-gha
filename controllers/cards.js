@@ -11,12 +11,10 @@ const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ForbiddenError = require('../errors/ForbiddenError');
 
-// Функция проверки наличия данных
 const checkData = (data) => {
   if (!data) throw new NotFoundError(CARD_NOT_FOUND_MESSAGE);
 };
 
-// Функция обработки ошибки лайка/дизлайка
 const handleLikeError = (next, error) => {
   if (error instanceof CastError) {
     return next(new BadRequestError(INCORRECT_LIKE_CARD_DATA_MESSAGE));
@@ -24,7 +22,6 @@ const handleLikeError = (next, error) => {
   return next(error);
 };
 
-// Создание новой карточки
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
 
@@ -38,14 +35,12 @@ module.exports.createCard = (req, res, next) => {
     });
 };
 
-// Получение списка карточек
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send(cards))
     .catch((error) => next(error));
 };
 
-// Лайк карточки
 module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
   const { _id } = req.user;
@@ -58,7 +53,6 @@ module.exports.likeCard = (req, res, next) => {
     .catch((error) => handleLikeError(next, error));
 };
 
-// Дизлайк карточки
 module.exports.dislikeCard = (req, res, next) => {
   const { cardId } = req.params;
   const { _id } = req.user;
@@ -70,7 +64,6 @@ module.exports.dislikeCard = (req, res, next) => {
     .catch((error) => handleLikeError(next, error));
 };
 
-// Удаление карточки
 module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findById(cardId)
