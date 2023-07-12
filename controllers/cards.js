@@ -79,6 +79,7 @@ module.exports.deleteCard = (req, res, next) => {
       return card.deleteOne();
     })
     .then((deletedCard) => res.send(deletedCard))
+    .then((card) => res.status(200).send(card))
     .catch((error) => {
       if (error instanceof CastError) {
         next(new BadRequestError(INCORRECT_CARD_DATA_MESSAGE));
