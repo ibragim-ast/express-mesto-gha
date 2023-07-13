@@ -26,11 +26,14 @@ router.post('/signin', celebrate({
   }),
 }), login);
 
+// Маршрут авторизации
+router.use(auth);
+
 // Маршрутизация к роутеру пользователей
-router.use('/users', auth, usersRouter);
+router.use('/users', usersRouter);
 
 // Маршрутизация к роутеру карточек
-router.use('/cards', auth, cardsRouter);
+router.use('/cards', cardsRouter);
 
 // Обработка неверного URL запроса
 router.all('*', (req, res, next) => next(new NotFoundError('Неверный URL запроса')));

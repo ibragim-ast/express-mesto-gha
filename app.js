@@ -26,15 +26,15 @@ app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Подключение маршрутизатора
-app.use(router);
-
 // Middleware для ограничения количества запросов от одного IP
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 минут
   max: 100, // максимальное количество запросов
   message: 'Слишком много запросов с вашего IP, попробуйте позже',
 }));
+
+// Подключение маршрутизатора
+app.use(router);
 
 // Middleware для обработки ошибок Celebrate
 app.use(errors());
