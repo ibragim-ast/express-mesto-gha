@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const { errors } = require('celebrate');
 const { PORT, DB_URI } = require('./config');
 const errorsHandler = require('./middlewares/errorsHandler');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 const router = require('./routes');
 
 // Подключение к базе данных MongoDB
@@ -33,11 +34,15 @@ app.use(rateLimit({
   message: 'Слишком много запросов с вашего IP, попробуйте позже',
 }));
 
+app.use(requestLogger);
+
 // Подключение маршрутизатора
 app.use(router);
 
 // Middleware для обработки ошибок Celebrate
 app.use(errors());
+
+app.use(errorLogger);
 
 // Middleware для обработки ошибок
 app.use(errorsHandler);
