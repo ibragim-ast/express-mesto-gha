@@ -47,6 +47,21 @@ module.exports.getCards = (req, res, next) => {
     .catch((error) => next(error));
 };
 
+// const updateLike = (req, res, next, method) => {
+//   const { params: { id } } = req;
+//   Card.findByIdAndUpdate(id, { [method]: { likes: req.user._id } }, { new: true })
+//     .populate('likes')
+//     .then((card) => {
+//       checkData(card);
+//       res.send(card);
+//     })
+//     .catch((error) => handleLikeError(next, error));
+// };
+
+// module.exports.likeCard = (req, res, next) => updateLike(req, res, next, '$addToSet');
+
+// module.exports.dislikeCard = (req, res, next) => updateLike(req, res, next, '$pull');
+
 // Лайк карточки
 module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
@@ -55,7 +70,7 @@ module.exports.likeCard = (req, res, next) => {
     .populate('likes')
     .then((card) => {
       checkData(card);
-      return res.send(card.likes);
+      return res.send(card);
     })
     .catch((error) => handleLikeError(next, error));
 };
@@ -67,7 +82,7 @@ module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(cardId, { $pull: { likes: _id } }, { new: true })
     .then((card) => {
       checkData(card);
-      return res.send(card.likes);
+      return res.send(card);
     })
     .catch((error) => handleLikeError(next, error));
 };
